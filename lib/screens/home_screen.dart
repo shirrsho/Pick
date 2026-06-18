@@ -41,7 +41,14 @@ void showChordDiagramPopup(BuildContext context, Chord chord) {
   );
 }
 
-enum SelectionMode { all, scale, custom }
+enum SelectionMode { all, scale, custom, sequence }
+
+/// One step of a custom loop: a chord and the delay (seconds) before the next.
+class SeqStep {
+  final String chordName;
+  int delay;
+  SeqStep(this.chordName, this.delay);
+}
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -55,13 +62,19 @@ class _HomeScreenState extends State<HomeScreen> {
   String _scale = ChordLibrary.scaleNames.first;
   final Set<String> _scaleDeselected = {}; // chords excluded from current scale
   final Set<String> _customSelected = {};
+  final List<SeqStep> _sequence = []; // ordered loop steps (sequence mode)
   int _delay = 2;
+  int _sessionMinutes = 0; // 0 = endless (practice until stopped)
 
-  // The custom picker is built once and kept alive (via Offstage), so toggling
-  // chips only rebuilds the picker itself — not this whole screen.
+  // The pickers are built once and kept alive (via Offstage), so editing them
+  // only rebuilds the picker itself — not this whole screen.
   late final Widget _customPicker = _CustomChordPicker(
     selection: _customSelected,
     onChanged: () => setState(() {}), // refresh the play-bar count only
+  );
+  late final Widget _sequenceBuilder = _SequenceBuilder(
+    sequence: _sequence,
+    onChanged: () => setState(() {}),
   );
 
   /// The chords that will actually be practiced for the current mode.
@@ -78,20 +91,39 @@ class _HomeScreenState extends State<HomeScreen> {
             .map((n) => ChordLibrary.byName(n))
             .whereType<Chord>()
             .toList();
+      case SelectionMode.sequence:
+        return _sequence
+            .map((s) => ChordLibrary.byName(s.chordName))
+            .whereType<Chord>()
+            .toList();
     }
   }
+
+  Duration? get _sessionLimit =>
+      _sessionMinutes == 0 ? null : Duration(minutes: _sessionMinutes);
 
   void _startPractice() {
     final chords = _activeChords;
     if (chords.length < 2) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Select at least 2 chords to practice.')),
+        SnackBar(
+          content: Text(_mode == SelectionMode.sequence
+              ? 'Add at least 2 chords to your loop.'
+              : 'Select at least 2 chords to practice.'),
+        ),
       );
       return;
     }
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => PlayScreen(chords: chords, delaySeconds: _delay),
+        builder: (_) => PlayScreen(
+          chords: chords,
+          delaySeconds: _delay,
+          sessionLimit: _sessionLimit,
+          stepDelays: _mode == SelectionMode.sequence
+              ? _sequence.map((s) => s.delay).toList()
+              : null,
+        ),
       ),
     );
   }
@@ -107,11 +139,11 @@ class _HomeScreenState extends State<HomeScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
         children: [
-          _sectionTitle('1. Choose your chords'),
+          _sectionTitle('Choose your chords'),
           const SizedBox(height: 8),
           _modeSelector(),
           const SizedBox(height: 16),
-          // All three bodies stay in the tree; only the active one is laid out.
+          // All bodies stay in the tree; only the active one is laid out.
           // Cached widget instances let the framework skip rebuilding them.
           Offstage(offstage: _mode != SelectionMode.all, child: _allBody),
           Offstage(
@@ -133,10 +165,19 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           Offstage(offstage: _mode != SelectionMode.custom, child: _customPicker),
+          Offstage(offstage: _mode != SelectionMode.sequence, child: _sequenceBuilder),
           const SizedBox(height: 24),
-          _sectionTitle('2. Delay between chords'),
+          // In loop mode each transition has its own delay, so the global
+          // delay selector is hidden.
+          if (_mode != SelectionMode.sequence) ...[
+            _sectionTitle('Delay between chords'),
+            const SizedBox(height: 8),
+            _delaySelector(),
+            const SizedBox(height: 24),
+          ],
+          _sectionTitle('Session length'),
           const SizedBox(height: 8),
-          _delaySelector(),
+          _sessionSelector(),
         ],
       ),
       bottomNavigationBar: _playBar(count),
@@ -149,11 +190,16 @@ class _HomeScreenState extends State<HomeScreen> {
       );
 
   Widget _modeSelector() {
+    // Four modes — drop the leading icons and the selected-check so the labels
+    // fit comfortably across narrow screens.
     return SegmentedButton<SelectionMode>(
+      showSelectedIcon: false,
+      style: const ButtonStyle(visualDensity: VisualDensity.compact),
       segments: const [
-        ButtonSegment(value: SelectionMode.all, label: Text('All'), icon: Icon(Icons.grid_view)),
-        ButtonSegment(value: SelectionMode.scale, label: Text('Scale'), icon: Icon(Icons.piano)),
-        ButtonSegment(value: SelectionMode.custom, label: Text('Custom'), icon: Icon(Icons.tune)),
+        ButtonSegment(value: SelectionMode.all, label: Text('All')),
+        ButtonSegment(value: SelectionMode.scale, label: Text('Scale')),
+        ButtonSegment(value: SelectionMode.custom, label: Text('Custom')),
+        ButtonSegment(value: SelectionMode.sequence, label: Text('Loop')),
       ],
       selected: {_mode},
       onSelectionChanged: (s) => setState(() => _mode = s.first),
@@ -188,6 +234,21 @@ class _HomeScreenState extends State<HomeScreen> {
           label: Text('${d}s'),
           selected: _delay == d,
           onSelected: (_) => setState(() => _delay = d),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _sessionSelector() {
+    // 0 = endless; other values are minutes.
+    const options = {0: 'Endless', 1: '1 min', 3: '3 min', 5: '5 min', 10: '10 min'};
+    return Wrap(
+      spacing: 10,
+      children: options.entries.map((e) {
+        return ChoiceChip(
+          label: Text(e.value),
+          selected: _sessionMinutes == e.key,
+          onSelected: (_) => setState(() => _sessionMinutes = e.key),
         );
       }).toList(),
     );
@@ -348,6 +409,260 @@ class _CustomChordPickerState extends State<_CustomChordPicker> {
           );
         }),
       ],
+    );
+  }
+}
+
+/// Loop builder: an ordered list of chords with an editable delay between each
+/// (the last delay loops back to the first chord). Manages its own rebuilds.
+class _SequenceBuilder extends StatefulWidget {
+  final List<SeqStep> sequence;
+  final VoidCallback onChanged;
+
+  const _SequenceBuilder({required this.sequence, required this.onChanged});
+
+  @override
+  State<_SequenceBuilder> createState() => _SequenceBuilderState();
+}
+
+class _SequenceBuilderState extends State<_SequenceBuilder> {
+  static const int _minDelay = 1;
+  static const int _maxDelay = 9;
+
+  void _changeDelay(int index, int by) {
+    setState(() {
+      final v = widget.sequence[index].delay + by;
+      widget.sequence[index].delay = v.clamp(_minDelay, _maxDelay);
+    });
+    widget.onChanged();
+  }
+
+  void _remove(int index) {
+    setState(() => widget.sequence.removeAt(index));
+    widget.onChanged();
+  }
+
+  void _add(String name) {
+    setState(() => widget.sequence.add(SeqStep(name, 2)));
+    widget.onChanged();
+  }
+
+  void _openAddSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (sheetCtx) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.7,
+          maxChildSize: 0.9,
+          builder: (_, controller) => StatefulBuilder(
+            builder: (_, setSheet) => ListView(
+              controller: controller,
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+              children: [
+                Row(
+                  children: [
+                    const Text('Add a chord',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                    const Spacer(),
+                    Text('${widget.sequence.length} in loop',
+                        style: TextStyle(color: Theme.of(context).colorScheme.primary)),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Tap to add (order matters). Long-press to preview.',
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
+                ),
+                const SizedBox(height: 12),
+                ...ChordLibrary.grouped.entries.map((entry) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: Text(entry.key,
+                              style: const TextStyle(fontWeight: FontWeight.w600)),
+                        ),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: entry.value.map((c) {
+                            return GestureDetector(
+                              onLongPress: () => showChordDiagramPopup(context, c),
+                              child: ActionChip(
+                                avatar: const Icon(Icons.add, size: 18),
+                                label: Text(c.name),
+                                onPressed: () {
+                                  _add(c.name);
+                                  setSheet(() {}); // refresh the count in the sheet
+                                },
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (widget.sequence.isEmpty)
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Build a loop',
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Add chords in the order you want to play them, then set the '
+                    'delay between each. The loop repeats until your session ends.',
+                    style: TextStyle(color: scheme.onSurfaceVariant),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(14, 14, 14, 6),
+              child: Column(
+                children: [
+                  for (int i = 0; i < widget.sequence.length; i++)
+                    _stepTile(scheme, i),
+                ],
+              ),
+            ),
+          ),
+        const SizedBox(height: 10),
+        OutlinedButton.icon(
+          onPressed: _openAddSheet,
+          icon: const Icon(Icons.add),
+          label: const Text('Add chord'),
+          style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+        ),
+      ],
+    );
+  }
+
+  Widget _stepTile(ColorScheme scheme, int i) {
+    final step = widget.sequence[i];
+    final isLast = i == widget.sequence.length - 1;
+    final chord = ChordLibrary.byName(step.chordName);
+
+    return Column(
+      children: [
+        // Chord row.
+        Row(
+          children: [
+            Container(
+              width: 30,
+              height: 30,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: scheme.primary.withValues(alpha: 0.18),
+                shape: BoxShape.circle,
+              ),
+              child: Text('${i + 1}',
+                  style: TextStyle(color: scheme.primary, fontWeight: FontWeight.w700)),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: GestureDetector(
+                onLongPress: chord == null
+                    ? null
+                    : () => showChordDiagramPopup(context, chord),
+                child: Text(step.chordName,
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
+              ),
+            ),
+            IconButton(
+              onPressed: () => _remove(i),
+              icon: const Icon(Icons.close),
+              tooltip: 'Remove',
+              visualDensity: VisualDensity.compact,
+            ),
+          ],
+        ),
+        // Delay connector to the next chord (or back to the first if last).
+        Padding(
+          padding: const EdgeInsets.only(left: 14, top: 2, bottom: 6),
+          child: Row(
+            children: [
+              Icon(isLast ? Icons.refresh : Icons.south,
+                  size: 18, color: scheme.onSurfaceVariant),
+              const SizedBox(width: 10),
+              _delayStepper(scheme, i),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  isLast ? 'then loop to #1' : 'then next',
+                  style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _delayStepper(ColorScheme scheme, int i) {
+    final delay = widget.sequence[i].delay;
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: scheme.outlineVariant),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _stepBtn(Icons.remove, delay > _minDelay, () => _changeDelay(i, -1)),
+          SizedBox(
+            width: 34,
+            child: Text('${delay}s',
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontWeight: FontWeight.w700)),
+          ),
+          _stepBtn(Icons.add, delay < _maxDelay, () => _changeDelay(i, 1)),
+        ],
+      ),
+    );
+  }
+
+  Widget _stepBtn(IconData icon, bool enabled, VoidCallback onTap) {
+    return InkResponse(
+      onTap: enabled ? onTap : null,
+      radius: 22,
+      child: Padding(
+        padding: const EdgeInsets.all(6),
+        child: Icon(icon,
+            size: 18,
+            color: enabled
+                ? Theme.of(context).colorScheme.primary
+                : Theme.of(context).disabledColor),
+      ),
     );
   }
 }

@@ -11,10 +11,20 @@ class PlayScreen extends StatefulWidget {
   final List<Chord> chords;
   final int delaySeconds;
 
+  /// Optional fixed session length. When null, practice runs until stopped.
+  final Duration? sessionLimit;
+
+  /// When non-null, chords play in order (looping) with one delay per chord —
+  /// `stepDelays[i]` is the seconds to wait after `chords[i]` before the next.
+  /// When null, chords appear randomly with [delaySeconds] between each.
+  final List<int>? stepDelays;
+
   const PlayScreen({
     super.key,
     required this.chords,
     required this.delaySeconds,
+    this.sessionLimit,
+    this.stepDelays,
   });
 
   @override
@@ -33,9 +43,19 @@ class _PlayScreenState extends State<PlayScreen>
   int _countdown = 3;
   Timer? _countdownTimer;
 
+  // Current position in the sequence (loop mode only).
+  int _index = 0;
+  bool get _sequential => widget.stepDelays != null;
+
   // Total elapsed practice time (pauses while practice is paused).
   final Stopwatch _watch = Stopwatch();
   Timer? _ticker;
+
+  // Completion (only for fixed-length sessions).
+  bool _finished = false;
+  bool _sessionRecorded = false; // guards against double-counting the total
+  int _lifetimeSeconds = 0; // lifetime total, shown on the completion screen
+  Duration _sessionElapsed = Duration.zero;
 
   @override
   void initState() {
@@ -45,19 +65,30 @@ class _PlayScreenState extends State<PlayScreen>
     WakelockPlus.enable();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
-    _current = _randomChord(exclude: null);
-    _next = _randomChord(exclude: _current);
+    if (_sequential) {
+      _index = 0;
+      _current = widget.chords[0];
+      _next = widget.chords[1 % widget.chords.length];
+    } else {
+      _current = _randomChord(exclude: null);
+      _next = _randomChord(exclude: _current);
+    }
 
     _progress = AnimationController(
       vsync: this,
-      duration: Duration(seconds: widget.delaySeconds),
+      duration: Duration(
+          seconds: _sequential ? widget.stepDelays![0] : widget.delaySeconds),
     )..addStatusListener((status) {
         if (status == AnimationStatus.completed && !_paused) {
           _advance();
         }
       });
 
-    // Run the countdown first; practice (timers + clock) begins after it.
+    _startCountdown();
+  }
+
+  void _startCountdown() {
+    _countdown = 3;
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (t) {
       setState(() => _countdown--);
       if (_countdown <= 0) {
@@ -71,10 +102,54 @@ class _PlayScreenState extends State<PlayScreen>
     _watch.start();
     _progress.forward();
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() {}); // refresh the elapsed-time display
+      if (!mounted) return;
+      final limit = widget.sessionLimit;
+      if (limit != null && _watch.elapsed >= limit) {
+        _finish();
+      } else {
+        setState(() {}); // refresh the elapsed-time display
+      }
     });
     // Starting a session clears the widget reminder.
     PracticeReminder.markPracticed();
+  }
+
+  Future<void> _finish() async {
+    _ticker?.cancel();
+    _progress.stop();
+    _watch.stop();
+    _sessionElapsed = _watch.elapsed;
+    _sessionRecorded = true;
+    final total = await PracticeReminder.addSession(_sessionElapsed);
+    if (!mounted) return;
+    setState(() {
+      _lifetimeSeconds = total;
+      _finished = true;
+    });
+  }
+
+  void _restart() {
+    _ticker?.cancel();
+    _countdownTimer?.cancel();
+    _progress.reset();
+    _watch
+      ..stop()
+      ..reset();
+    setState(() {
+      _finished = false;
+      _sessionRecorded = false;
+      _paused = false;
+      if (_sequential) {
+        _index = 0;
+        _current = widget.chords[0];
+        _next = widget.chords[1 % widget.chords.length];
+        _progress.duration = Duration(seconds: widget.stepDelays![0]);
+      } else {
+        _current = _randomChord(exclude: null);
+        _next = _randomChord(exclude: _current);
+      }
+    });
+    _startCountdown();
   }
 
   String _formatElapsed(Duration d) {
@@ -94,8 +169,16 @@ class _PlayScreenState extends State<PlayScreen>
 
   void _advance() {
     setState(() {
-      _current = _next;
-      _next = _randomChord(exclude: _current);
+      if (_sequential) {
+        final n = widget.chords.length;
+        _index = (_index + 1) % n;
+        _current = widget.chords[_index];
+        _next = widget.chords[(_index + 1) % n];
+        _progress.duration = Duration(seconds: widget.stepDelays![_index]);
+      } else {
+        _current = _next;
+        _next = _randomChord(exclude: _current);
+      }
     });
     _progress
       ..reset()
@@ -119,8 +202,11 @@ class _PlayScreenState extends State<PlayScreen>
 
   @override
   void dispose() {
-    // Record this session's length toward the lifetime total.
-    PracticeReminder.addSession(_watch.elapsed);
+    // Record this session's length toward the lifetime total, unless a
+    // fixed-length session already recorded it on completion.
+    if (!_sessionRecorded) {
+      PracticeReminder.addSession(_watch.elapsed);
+    }
     _countdownTimer?.cancel();
     _ticker?.cancel();
     _progress.dispose();
@@ -129,9 +215,19 @@ class _PlayScreenState extends State<PlayScreen>
     super.dispose();
   }
 
+  String _formatLong(Duration d) {
+    final h = d.inHours;
+    final m = d.inMinutes % 60;
+    final s = d.inSeconds % 60;
+    if (h > 0) return '${h}h ${m}m';
+    if (m > 0) return s > 0 ? '${m}m ${s}s' : '${m}m';
+    return '${s}s';
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    if (_finished) return _completionScreen(scheme);
     return Scaffold(
       backgroundColor: const Color(0xFF0E1116),
       body: Stack(
@@ -217,31 +313,152 @@ class _PlayScreenState extends State<PlayScreen>
     );
   }
 
-  // Full-screen 3..2..1 countdown shown before the first chord.
+  // Full-screen 3..2..1 countdown that also previews the first chord.
   Widget _countdownOverlay(ColorScheme scheme) {
     return Positioned.fill(
       child: Container(
         color: const Color(0xFF0E1116),
-        alignment: Alignment.center,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Get ready',
-              style: TextStyle(color: Colors.white70, fontSize: 22, fontWeight: FontWeight.w600),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Get ready',
+                  style: TextStyle(
+                      color: Colors.white70, fontSize: 20, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '$_countdown',
+                  style: TextStyle(
+                    color: scheme.primary,
+                    fontSize: 96,
+                    fontWeight: FontWeight.w800,
+                    height: 1.1,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'FIRST CHORD',
+                  style: TextStyle(
+                    color: scheme.primary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 2,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  _current.name,
+                  style: const TextStyle(
+                      color: Colors.white, fontSize: 44, fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 12),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 170),
+                  child: ChordDiagram(chord: _current),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            Text(
-              '$_countdown',
-              style: TextStyle(
-                color: scheme.primary,
-                fontSize: 140,
-                fontWeight: FontWeight.w800,
-                height: 1.0,
-              ),
-            ),
-          ],
+          ),
         ),
+      ),
+    );
+  }
+
+  // Congratulatory screen shown after a fixed-length session completes.
+  Widget _completionScreen(ColorScheme scheme) {
+    final lifetime = Duration(seconds: _lifetimeSeconds);
+    return Scaffold(
+      backgroundColor: const Color(0xFF0E1116),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(28),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 96,
+                height: 96,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [scheme.primary, const Color(0xFFE1322B)],
+                  ),
+                ),
+                child: const Icon(Icons.check_rounded, size: 56, color: Colors.white),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Nice practice! 🎉',
+                style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'You kept the loop going the whole time.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 15),
+              ),
+              const SizedBox(height: 28),
+              _statRow(scheme, Icons.timer_outlined, 'This session',
+                  _formatLong(_sessionElapsed)),
+              const SizedBox(height: 12),
+              _statRow(scheme, Icons.music_note, 'Chords practised',
+                  '${widget.chords.length}'),
+              const SizedBox(height: 12),
+              _statRow(scheme, Icons.local_fire_department, 'Total practice (all-time)',
+                  _formatLong(lifetime)),
+              const Spacer(),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: _restart,
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(54),
+                    textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+                  ),
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Practice again'),
+                ),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: TextButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+                  child: const Text('Done'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _statRow(ColorScheme scheme, IconData icon, String label, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white12),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: scheme.primary, size: 22),
+          const SizedBox(width: 14),
+          Text(label, style: const TextStyle(color: Colors.white70, fontSize: 15)),
+          const Spacer(),
+          Text(value,
+              style: const TextStyle(
+                  color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+        ],
       ),
     );
   }
@@ -262,6 +479,16 @@ class _PlayScreenState extends State<PlayScreen>
             fontFeatures: [FontFeature.tabularFigures()],
           ),
         ),
+        if (widget.sessionLimit != null)
+          Text(
+            ' / ${_formatElapsed(widget.sessionLimit!)}',
+            style: const TextStyle(
+              color: Colors.white54,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              fontFeatures: [FontFeature.tabularFigures()],
+            ),
+          ),
         if (_paused) ...[
           const SizedBox(width: 8),
           Text('paused', style: TextStyle(color: scheme.primary, fontSize: 13)),

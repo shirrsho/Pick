@@ -20,17 +20,25 @@ class PracticeReminder {
     await _update();
   }
 
+  /// Read the lifetime total practice time (in seconds).
+  static Future<int> totalSeconds() async {
+    final v = await HomeWidget.getWidgetData<String>(_totalKey, defaultValue: '0');
+    return int.tryParse(v ?? '0') ?? 0;
+  }
+
   /// Add a finished session's duration to the lifetime total and refresh.
-  static Future<void> addSession(Duration elapsed) async {
-    if (elapsed.inSeconds <= 0) return;
-    final prev = await HomeWidget.getWidgetData<String>(_totalKey, defaultValue: '0');
-    final total = (int.tryParse(prev ?? '0') ?? 0) + elapsed.inSeconds;
+  /// Returns the new lifetime total in seconds.
+  static Future<int> addSession(Duration elapsed) async {
+    final prev = await totalSeconds();
+    if (elapsed.inSeconds <= 0) return prev;
+    final total = prev + elapsed.inSeconds;
     await HomeWidget.saveWidgetData<String>(_totalKey, total.toString());
     await HomeWidget.saveWidgetData<String>(
       _lastKey,
       DateTime.now().millisecondsSinceEpoch.toString(),
     );
     await _update();
+    return total;
   }
 
   /// Re-render the widget (e.g. on app launch) without changing the data.
