@@ -151,7 +151,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final count = _activeChords.length;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('LoopChords'),
+        title: const Text('Pick'),
         centerTitle: true,
         actions: [
           Builder(

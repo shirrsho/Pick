@@ -1,6 +1,8 @@
-"""Generates app icon, adaptive foreground, and splash assets for Chord Practice.
+"""Generates the Pick app icon, adaptive foreground, and splash assets.
 
 Run from the project root:  python3 tool/generate_icons.py
+
+The logo is a clean white guitar pick on a warm orange gradient.
 """
 import os
 from PIL import Image, ImageDraw
@@ -8,7 +10,7 @@ from PIL import Image, ImageDraw
 OUT = "assets/icon"
 os.makedirs(OUT, exist_ok=True)
 
-SS = 4  # supersample factor for smooth, anti-aliased edges
+SS = 4  # supersample for smooth, anti-aliased edges
 SIZE = 1024
 
 
@@ -23,34 +25,6 @@ def vertical_gradient(size, top, bottom):
     return grad.resize((size, size))
 
 
-def draw_fretboard(draw, box, line_color, dot_color, lw):
-    """Draws a stylised chord diagram (5 strings, 4 frets, 3 finger dots)."""
-    x0, y0, x1, y1 = box
-    w, h = x1 - x0, y1 - y0
-    nstr, nfret = 5, 4
-    colgap = w / (nstr - 1)
-    rowgap = h / nfret
-
-    # strings (vertical)
-    for s in range(nstr):
-        x = x0 + s * colgap
-        draw.line([(x, y0), (x, y1)], fill=line_color, width=lw)
-
-    # frets (horizontal); the top one is the thick nut
-    for f in range(nfret + 1):
-        y = y0 + f * rowgap
-        thick = int(lw * 3.2) if f == 0 else lw
-        draw.line([(x0 - lw, y), (x1 + lw, y)], fill=line_color, width=thick)
-
-    # finger dots: (string index from left, fret number)
-    dots = [(1, 1), (3, 1), (2, 2)]
-    r = colgap * 0.32
-    for s, f in dots:
-        cx = x0 + s * colgap
-        cy = y0 + (f - 0.5) * rowgap
-        draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=dot_color)
-
-
 def rounded_mask(size, radius):
     mask = Image.new("L", (size, size), 0)
     d = ImageDraw.Draw(mask)
@@ -58,33 +32,44 @@ def rounded_mask(size, radius):
     return mask
 
 
+def draw_pick(draw, cx, cy, w, h, fill):
+    """A rounded guitar pick (point down), centered at (cx, cy)."""
+    r = w * 0.30  # corner rounding
+    top_l = (cx - w / 2, cy - h / 2 + r)
+    top_r = (cx + w / 2, cy - h / 2 + r)
+    bottom = (cx, cy + h / 2)
+    pts = [top_l, top_r, bottom]
+    # corner discs
+    for (x, y) in pts:
+        draw.ellipse([x - r, y - r, x + r, y + r], fill=fill)
+    # inner triangle + thick edges (rounds the silhouette)
+    draw.polygon(pts, fill=fill)
+    for a in range(3):
+        x0, y0 = pts[a]
+        x1, y1 = pts[(a + 1) % 3]
+        draw.line([(x0, y0), (x1, y1)], fill=fill, width=int(r * 2))
+
+
 def build_icon():
     s = SIZE * SS
-    # Warm orange gradient background, rounded corners (transparent outside).
     bg = vertical_gradient(s, (0xFF, 0xB2, 0x59), (0xF2, 0x68, 0x2A)).convert("RGBA")
     mask = rounded_mask(s, int(s * 0.22))
     img = Image.new("RGBA", (s, s), (0, 0, 0, 0))
     img.paste(bg, (0, 0), mask)
 
     draw = ImageDraw.Draw(img)
-    m = s * 0.26  # margin around the motif
-    box = (m, s * 0.22, s - m, s * 0.86)
-    white = (255, 255, 255, 240)
-    draw_fretboard(draw, box, white, (255, 255, 255, 255), lw=int(s * 0.018))
+    draw_pick(draw, s * 0.5, s * 0.5, s * 0.46, s * 0.56, (255, 255, 255, 255))
 
     img.resize((SIZE, SIZE), Image.LANCZOS).save(f"{OUT}/icon.png")
 
 
 def build_foreground():
-    """Transparent foreground for Android adaptive icons (motif only, padded)."""
+    """Transparent foreground for Android adaptive icons (pick only, padded)."""
     s = SIZE * SS
     img = Image.new("RGBA", (s, s), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
-    # Keep within the adaptive-icon safe zone (~62% center).
-    m = s * 0.34
-    box = (m, s * 0.30, s - m, s * 0.74)
-    white = (255, 255, 255, 245)
-    draw_fretboard(draw, box, white, (255, 255, 255, 255), lw=int(s * 0.020))
+    # Keep within the adaptive-icon safe zone (~60% center).
+    draw_pick(draw, s * 0.5, s * 0.5, s * 0.36, s * 0.44, (255, 255, 255, 255))
     img.resize((SIZE, SIZE), Image.LANCZOS).save(f"{OUT}/foreground.png")
 
 

@@ -4,39 +4,38 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<title>LoopChords — Free Guitar Chord Practice App for Android</title>
-<meta name="description" content="LoopChords is a free, open-source guitar chord trainer for Android. Loop through random chords on a timer with fretboard diagrams to master your chord changes. Download the APK free." />
-<meta name="keywords" content="guitar chords app, chord practice, chord trainer, learn guitar, guitar fretboard, chord changes, guitar scales, chord progression trainer, practice guitar android, free guitar app, open source guitar app, LoopChords" />
+<title>Pick — Free Guitar Chord & Scale Practice App for Android</title>
+<meta name="description" content="Pick is a free, open-source guitar practice app for Android. Drill chord changes, practise scales and lead, and lock into a built-in metronome. Download the APK free." />
+<meta name="keywords" content="guitar practice app, chord trainer, scale practice, guitar scales, lead guitar, soloing, pentatonic, fretboard trainer, guitar metronome, chord changes, learn guitar, free guitar app, open source, Pick" />
 <meta name="author" content="shirrsho" />
 <meta name="theme-color" content="#0E1116" />
-<link rel="canonical" href="https://shirrsho.github.io/LoopChords/" />
+<link rel="canonical" href="https://shirrsho.github.io/Pick/" />
 <link rel="icon" type="image/png" href="icon.png" />
 <link rel="apple-touch-icon" href="icon.png" />
 
 <meta property="og:type" content="website" />
-<meta property="og:url" content="https://shirrsho.github.io/LoopChords/" />
-<meta property="og:title" content="LoopChords — Free Guitar Chord Practice App for Android" />
-<meta property="og:description" content="Loop through random chords on a timer with fretboard diagrams to master your chord changes. Free & open source." />
-<meta property="og:image" content="https://shirrsho.github.io/LoopChords/icon.png" />
-<meta property="og:site_name" content="LoopChords" />
+<meta property="og:url" content="https://shirrsho.github.io/Pick/" />
+<meta property="og:title" content="Pick — Free Guitar Chord & Scale Practice App for Android" />
+<meta property="og:description" content="Drill chord changes, practise scales and lead, and play to a built-in metronome. Free & open source." />
+<meta property="og:image" content="https://shirrsho.github.io/Pick/icon.png" />
+<meta property="og:site_name" content="Pick" />
 
 <meta name="twitter:card" content="summary" />
-<meta name="twitter:title" content="LoopChords — Free Guitar Chord Practice App" />
-<meta name="twitter:description" content="Loop through random chords on a timer with fretboard diagrams. Free & open source Android app." />
-<meta name="twitter:image" content="https://shirrsho.github.io/LoopChords/icon.png" />
+<meta name="twitter:title" content="Pick — Free Guitar Practice App" />
+<meta name="twitter:description" content="Chords, scales, lead & a metronome. Free & open source Android app." />
+<meta name="twitter:image" content="https://shirrsho.github.io/Pick/icon.png" />
 
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
-  "name": "LoopChords",
+  "name": "Pick",
   "operatingSystem": "Android",
   "applicationCategory": "EducationalApplication",
-  "description": "A free, open-source guitar chord practice app. Loop through random chords on a timer with fretboard diagrams to train your chord changes.",
+  "description": "A free, open-source guitar practice app. Drill chord changes, practise scales and lead, and play to a built-in metronome.",
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-  "downloadUrl": "https://github.com/shirrsho/LoopChords/releases/latest/download/LoopChords.apk",
-  "softwareVersion": "1.0.0",
-  "license": "https://github.com/shirrsho/LoopChords/blob/main/LICENSE",
+  "downloadUrl": "https://github.com/shirrsho/Pick/releases/latest/download/Pick.apk",
+  "license": "https://github.com/shirrsho/Pick/blob/main/LICENSE",
   "author": { "@type": "Person", "name": "shirrsho" }
 }
 </script>
@@ -51,194 +50,92 @@
   html{scroll-behavior:smooth}
   body{
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    background:var(--bg);color:var(--text);line-height:1.6;
-    -webkit-font-smoothing:antialiased;
+    background:var(--bg);color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased;
   }
   a{color:inherit;text-decoration:none}
   .wrap{max-width:1040px;margin:0 auto;padding:0 24px}
   .accent{color:var(--accent)}
-
-  /* Hero */
-  header{
-    text-align:center;padding:72px 0 56px;
-    background:radial-gradient(900px 500px at 50% -10%, rgba(255,138,61,.16), transparent 70%);
-  }
+  header{text-align:center;padding:72px 0 56px;
+    background:radial-gradient(900px 500px at 50% -10%, rgba(255,138,61,.16), transparent 70%);}
   .logo{width:104px;height:104px;border-radius:24px;box-shadow:0 12px 40px rgba(0,0,0,.5)}
-  h1{font-size:54px;font-weight:800;letter-spacing:-1px;margin:18px 0 6px}
-  .tag{font-size:20px;color:var(--muted);max-width:560px;margin:0 auto 30px}
+  h1{font-size:56px;font-weight:800;letter-spacing:-1px;margin:18px 0 6px}
+  .tag{font-size:20px;color:var(--muted);max-width:600px;margin:0 auto 30px}
   .btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
-  .btn{
-    display:inline-flex;align-items:center;gap:10px;font-weight:700;font-size:17px;
-    padding:15px 28px;border-radius:14px;transition:transform .15s ease, box-shadow .15s ease;
-  }
+  .btn{display:inline-flex;align-items:center;gap:10px;font-weight:700;font-size:17px;
+    padding:15px 28px;border-radius:14px;transition:transform .15s ease, box-shadow .15s ease;}
   .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#1a0f04;
     box-shadow:0 8px 28px rgba(242,104,42,.4)}
   .btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 34px rgba(242,104,42,.55)}
   .btn-ghost{background:var(--surface);border:1px solid var(--border);color:var(--text)}
   .btn-ghost:hover{transform:translateY(-2px);border-color:#3a414d}
   .sub{margin-top:16px;font-size:14px;color:var(--muted)}
-
-  section{padding:56px 0}
+  section{padding:52px 0}
   h2{font-size:32px;font-weight:800;text-align:center;letter-spacing:-.5px;margin-bottom:8px}
-  .lead{text-align:center;color:var(--muted);max-width:620px;margin:0 auto 40px}
-
-  /* Hero showcase row */
-  .showcase{display:flex;gap:48px;align-items:center;justify-content:center;flex-wrap:wrap}
-  .phone{flex:0 0 auto}
-  .showcase .copy{flex:1 1 320px;max-width:440px}
-  .showcase .copy h2{text-align:left}
-  .showcase .copy p{color:var(--muted);margin-bottom:14px}
-  ul.checks{list-style:none}
-  ul.checks li{padding:7px 0 7px 30px;position:relative;color:var(--text)}
-  ul.checks li::before{content:"✓";position:absolute;left:0;color:var(--accent);font-weight:800}
-
-  /* Features grid */
+  .lead{text-align:center;color:var(--muted);max-width:640px;margin:0 auto 40px}
   .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px}
   .card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:24px}
   .card .ico{font-size:30px;margin-bottom:10px}
   .card h3{font-size:18px;margin-bottom:6px}
   .card p{color:var(--muted);font-size:15px}
-
-  /* Steps */
   .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}
   .step{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:24px;text-align:center}
   .num{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));
     color:#1a0f04;font-weight:800;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:18px}
-
-  /* Widget banner */
-  .banner{background:var(--surface2);border:1px solid var(--border);border-radius:22px;padding:36px;
-    display:flex;gap:32px;align-items:center;justify-content:center;flex-wrap:wrap}
-  .tile{width:140px;height:140px;border-radius:22px;display:flex;flex-direction:column;
-    align-items:center;justify-content:center;gap:6px;flex:0 0 auto}
-  .tile-red{background:var(--red)}
-  .tile-red .t{color:#fff;font-weight:700;font-size:15px}
-  .tile-red .s{color:#ffe3e1;font-size:12px}
-  .tile .em{font-size:30px}
-  .banner .copy{flex:1 1 320px;max-width:460px}
-  .banner .copy h2{text-align:left;margin-bottom:10px}
-  .banner .copy p{color:var(--muted)}
-
   footer{border-top:1px solid var(--border);padding:40px 0;text-align:center;color:var(--muted);font-size:14px}
   footer a{color:var(--accent)}
-  .kw{margin-top:14px;font-size:12px;color:#5a6573;max-width:760px;margin-left:auto;margin-right:auto}
-
-  @media(max-width:600px){
-    h1{font-size:40px} .tag{font-size:18px}
-    .showcase .copy h2,.banner .copy h2{text-align:center}
-  }
+  .kw{margin-top:14px;font-size:12px;color:#5a6573;max-width:780px;margin-left:auto;margin-right:auto}
+  @media(max-width:600px){ h1{font-size:42px} .tag{font-size:18px} }
 </style>
 </head>
 <body>
 
 <header>
   <div class="wrap">
-    <img class="logo" src="icon.png" alt="LoopChords app icon" width="104" height="104" />
-    <h1>Loop<span class="accent">Chords</span></h1>
-    <p class="tag">The free guitar chord practice app that loops random chords on a timer — so you finally nail your chord changes.</p>
+    <img class="logo" src="icon.png" alt="Pick app icon" width="104" height="104" />
+    <h1>Pick</h1>
+    <p class="tag">The free guitar practice app — drill chord changes, practise scales and lead, and lock into a built-in metronome.</p>
     <div class="btns">
-      <a class="btn btn-primary" href="https://github.com/shirrsho/LoopChords/releases/latest/download/LoopChords.apk">⬇ Download APK</a>
-      <a class="btn btn-ghost" href="https://github.com/shirrsho/LoopChords">★ View on GitHub</a>
+      <a class="btn btn-primary" href="https://github.com/shirrsho/Pick/releases/latest/download/Pick.apk">⬇ Download APK</a>
+      <a class="btn btn-ghost" href="https://github.com/shirrsho/Pick">★ View on GitHub</a>
     </div>
     <p class="sub">Free &amp; open source · No ads · No sign-up · Works offline · Android 5.0+</p>
   </div>
 </header>
 
 <section>
-  <div class="wrap showcase">
-    <div class="phone">
-      <svg width="280" height="560" viewBox="0 0 300 600" role="img" aria-label="LoopChords play screen preview showing a large G chord with its fretboard diagram">
-        <rect x="8" y="8" width="284" height="584" rx="38" fill="#0E1116" stroke="#2A2F38" stroke-width="2"/>
-        <rect x="30" y="34" width="240" height="5" rx="2.5" fill="#2A2F38"/>
-        <rect x="30" y="34" width="96" height="5" rx="2.5" fill="#FF8A3D"/>
-        <circle cx="44" cy="60" r="13" fill="#222B36"/><text x="44" y="65" text-anchor="middle" fill="#cfd8e3" font-size="14">✕</text>
-        <circle cx="76" cy="60" r="13" fill="#222B36"/><rect x="71" y="54" width="3.5" height="12" rx="1" fill="#cfd8e3"/><rect x="77.5" y="54" width="3.5" height="12" rx="1" fill="#cfd8e3"/>
-        <circle cx="108" cy="60" r="13" fill="#222B36"/><path d="M103 54 L111 60 L103 66 Z" fill="#cfd8e3"/><rect x="112" y="54" width="3" height="12" fill="#cfd8e3"/>
-        <text x="266" y="65" text-anchor="end" fill="#8A97A8" font-size="12">12 chords</text>
-
-        <text x="150" y="215" text-anchor="middle" fill="#fff" font-size="120" font-weight="800" font-family="sans-serif">G</text>
-
-        <g stroke="#6c7888" stroke-width="1.4">
-          <line x1="100" y1="320" x2="100" y2="430"/><line x1="120" y1="320" x2="120" y2="430"/>
-          <line x1="140" y1="320" x2="140" y2="430"/><line x1="160" y1="320" x2="160" y2="430"/>
-          <line x1="180" y1="320" x2="180" y2="430"/><line x1="200" y1="320" x2="200" y2="430"/>
-          <line x1="100" y1="342" x2="200" y2="342"/><line x1="100" y1="364" x2="200" y2="364"/>
-          <line x1="100" y1="386" x2="200" y2="386"/><line x1="100" y1="408" x2="200" y2="408"/>
-          <line x1="100" y1="430" x2="200" y2="430"/>
-        </g>
-        <line x1="98" y1="320" x2="202" y2="320" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
-        <circle cx="140" cy="312" r="4" fill="none" stroke="#fff" stroke-width="1.5"/>
-        <circle cx="160" cy="312" r="4" fill="none" stroke="#fff" stroke-width="1.5"/>
-        <circle cx="180" cy="312" r="4" fill="none" stroke="#fff" stroke-width="1.5"/>
-        <circle cx="100" cy="375" r="8" fill="#fff"/>
-        <circle cx="120" cy="353" r="8" fill="#fff"/>
-        <circle cx="200" cy="375" r="8" fill="#fff"/>
-
-        <circle cx="36" cy="556" r="5" fill="#FF8A3D"/>
-        <text x="48" y="561" fill="#fff" font-size="17" font-weight="700">02:14</text>
-        <rect x="188" y="500" width="92" height="76" rx="12" fill="#161B22" stroke="#2A2F38"/>
-        <text x="200" y="518" fill="#FF8A3D" font-size="9" font-weight="700" letter-spacing="1.5">NEXT</text>
-        <text x="200" y="546" fill="#fff" font-size="24" font-weight="700">C</text>
-        <g stroke="#5b6675" stroke-width="1">
-          <line x1="246" y1="512" x2="246" y2="560"/><line x1="256" y1="512" x2="256" y2="560"/>
-          <line x1="266" y1="512" x2="266" y2="560"/>
-          <line x1="246" y1="524" x2="266" y2="524"/><line x1="246" y1="536" x2="266" y2="536"/>
-          <line x1="246" y1="548" x2="266" y2="548"/>
-        </g>
-        <circle cx="256" cy="530" r="3.5" fill="#cfd8e3"/>
-      </svg>
-    </div>
-    <div class="copy">
-      <h2>Practice that actually sticks</h2>
-      <p>Pick your chords, set a delay, and hit play. LoopChords shows one chord big in the center with its fretboard, previews the next one in the corner, and keeps looping — training the muscle memory you need for smooth, fast chord changes.</p>
-      <ul class="checks">
-        <li>Random order — no memorizing a fixed sequence</li>
-        <li>Adjustable 1–5 second delay</li>
-        <li>Next-chord preview so you're always ready</li>
-        <li>Live elapsed-time counter, pause &amp; skip</li>
-      </ul>
-    </div>
-  </div>
-</section>
-
-<section>
   <div class="wrap">
-    <h2>Everything you need to drill chords</h2>
-    <p class="lead">A focused, distraction-free trainer for beginners and intermediate players alike.</p>
+    <h2>Two ways to practise</h2>
+    <p class="lead">Open the app and pick what you want to work on.</p>
     <div class="grid">
-      <div class="card"><div class="ico">🎲</div><h3>Randomized drills</h3><p>Chords loop in random order so you build real recall, not rote memory.</p></div>
-      <div class="card"><div class="ico">🎼</div><h3>All · Scale · Custom</h3><p>Drill every chord, the diatonic chords of a key, or a hand-picked set.</p></div>
-      <div class="card"><div class="ico">🎸</div><h3>Fretboard diagrams</h3><p>Finger positions, open/muted strings, and proper barre-chord bars.</p></div>
-      <div class="card"><div class="ico">👆</div><h3>Long-press preview</h3><p>Hold any chord while selecting to pop up its full diagram.</p></div>
-      <div class="card"><div class="ico">🔴</div><h3>Reminder widget</h3><p>A 2×2 home-screen widget that turns red after 6 hours of no practice.</p></div>
-      <div class="card"><div class="ico">🌙</div><h3>Clean &amp; offline</h3><p>Dark UI, no ads, no account, no internet required. 100% free.</p></div>
+      <div class="card"><div class="ico">🎵</div><h3>Chords</h3><p>Randomized chord-change drills — all chords, the chords of a key, or a custom loop with per-change delays. Fretboard diagrams for every chord.</p></div>
+      <div class="card"><div class="ico">🎤</div><h3>Leads</h3><p>Scales &amp; soloing: see a scale on the neck, drill its notes in time for picking practice, or improvise to random targets — plus a plain-English theory primer.</p></div>
     </div>
   </div>
 </section>
 
 <section>
   <div class="wrap">
-    <h2>Start in 3 taps</h2>
+    <h2>Everything you need to practise</h2>
+    <p class="lead">A focused, distraction-free trainer for beginners and intermediate players.</p>
+    <div class="grid">
+      <div class="card"><div class="ico">🎲</div><h3>Randomized drills</h3><p>Chords and notes loop in random order so you build real recall, not rote memory.</p></div>
+      <div class="card"><div class="ico">🥁</div><h3>Built-in metronome</h3><p>Tempo mode with an accented downbeat, beat dots, count-in and an optional screen flash.</p></div>
+      <div class="card"><div class="ico">🪕</div><h3>Fretboard diagrams</h3><p>Hand-drawn chord shapes and scale boxes with roots highlighted, right on the neck.</p></div>
+      <div class="card"><div class="ico">📚</div><h3>Music theory primer</h3><p>Notes → steps → scales → keys → pentatonic &amp; blues, explained in plain English.</p></div>
+      <div class="card"><div class="ico">🔴</div><h3>Reminder widget</h3><p>A home-screen widget that turns red after 12 hours and shows your lifetime practice time.</p></div>
+      <div class="card"><div class="ico">🌙</div><h3>Clean &amp; offline</h3><p>Dark UI, no ads, no account, no internet required. 100% free &amp; open source.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Start in seconds</h2>
     <p class="lead">No setup, no learning curve.</p>
     <div class="steps">
-      <div class="step"><div class="num">1</div><h3>Pick chords</h3><p>Choose All, a scale/key, or your own custom set.</p></div>
-      <div class="step"><div class="num">2</div><h3>Set the delay</h3><p>1 to 5 seconds between each chord change.</p></div>
-      <div class="step"><div class="num">3</div><h3>Play &amp; loop</h3><p>Follow the chords as they appear and build speed.</p></div>
-    </div>
-  </div>
-</section>
-
-<section>
-  <div class="wrap">
-    <div class="banner">
-      <div class="tile tile-red">
-        <span class="em">🎸</span>
-        <span class="t">Time to practice!</span>
-        <span class="s">6h+ since last session</span>
-      </div>
-      <div class="copy">
-        <h2>A nudge on your home screen</h2>
-        <p>Add the LoopChords 2×2 widget and it stays calm after you practise — then glows a bold red reminder once six hours pass. Tap it to jump straight back into a session and keep your streak alive.</p>
-      </div>
+      <div class="step"><div class="num">1</div><h3>Chords or Leads</h3><p>Pick what you want to practise.</p></div>
+      <div class="step"><div class="num">2</div><h3>Set it up</h3><p>Choose chords/scale, timing, and session length.</p></div>
+      <div class="step"><div class="num">3</div><h3>Play &amp; loop</h3><p>Follow the prompts in time and build muscle memory.</p></div>
     </div>
   </div>
 </section>
@@ -246,19 +143,19 @@
 <section style="text-align:center;padding-bottom:72px">
   <div class="wrap">
     <h2>Ready to play?</h2>
-    <p class="lead">Download LoopChords free and start drilling today.</p>
+    <p class="lead">Download Pick free and start practising today.</p>
     <div class="btns">
-      <a class="btn btn-primary" href="https://github.com/shirrsho/LoopChords/releases/latest/download/LoopChords.apk">⬇ Download APK</a>
-      <a class="btn btn-ghost" href="https://github.com/shirrsho/LoopChords/releases">All releases</a>
+      <a class="btn btn-primary" href="https://github.com/shirrsho/Pick/releases/latest/download/Pick.apk">⬇ Download APK</a>
+      <a class="btn btn-ghost" href="https://github.com/shirrsho/Pick/releases">All releases</a>
     </div>
   </div>
 </section>
 
 <footer>
   <div class="wrap">
-    <p>LoopChords is free &amp; open source under the <a href="https://github.com/shirrsho/LoopChords/blob/main/LICENSE">MIT License</a>.</p>
-    <p style="margin-top:6px"><a href="https://github.com/shirrsho/LoopChords">GitHub</a> · <a href="https://github.com/shirrsho/LoopChords/releases/latest">Latest release</a> · Built with Flutter 🎸</p>
-    <p class="kw">Guitar chords app · chord practice · chord trainer · learn guitar · guitar fretboard · chord changes · guitar scales · chord progression trainer · practice guitar on Android · free open-source guitar app</p>
+    <p>Pick is free &amp; open source under the <a href="https://github.com/shirrsho/Pick/blob/main/LICENSE">MIT License</a>.</p>
+    <p style="margin-top:6px"><a href="https://github.com/shirrsho/Pick">GitHub</a> · <a href="https://github.com/shirrsho/Pick/releases/latest">Latest release</a> · Built with Flutter 🎸</p>
+    <p class="kw">Guitar practice app · chord trainer · scale practice · guitar scales · lead guitar · soloing · pentatonic · fretboard trainer · guitar metronome · chord changes · learn guitar · free open-source guitar app</p>
   </div>
 </footer>
 

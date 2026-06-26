@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
-import 'screens/home_screen.dart';
+import 'screens/landing_screen.dart';
 import 'services/practice_reminder.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const PracticeChordsApp());
+  runApp(const PickApp());
   // Re-render the home-screen widget so its "time since practice" stays fresh.
   PracticeReminder.refresh();
 }
 
-class PracticeChordsApp extends StatelessWidget {
-  const PracticeChordsApp({super.key});
+class PickApp extends StatelessWidget {
+  const PickApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'LoopChords',
+      title: 'Pick',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
@@ -25,7 +25,7 @@ class PracticeChordsApp extends StatelessWidget {
           brightness: Brightness.dark,
         ),
       ),
-      home: const HomeScreen(),
+      home: const LandingScreen(),
     );
   }
 }
